@@ -21,6 +21,8 @@ class FinancialAnalyzer:
             "1 week": "1_week", 
             "1 month": "1_month"
         }
+
+        self.parse_folders = [""]
         
         self.config = config
             
@@ -79,11 +81,12 @@ class FinancialAnalyzer:
     def save_results(self, symbol: str, time_period: str, full_response: str, parsed_data: Optional[Dict]) -> None:
         """Save both full and parsed results to files"""
         time_key = self.time_mapping[time_period]
-        
+        timeNow = datetime.now()
+
         # Save full response
-        full_filename = f"Full-{symbol}-{time_key}.json"
+        full_filename = f"Full-{timeNow.year:04d}{timeNow.month:02d}{timeNow.day:02d}-{symbol}-{time_key}.json"
         full_data = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": timeNow.isoformat(),
             "symbol": symbol,
             "time_period": time_period,
             "response": full_response
@@ -98,14 +101,19 @@ class FinancialAnalyzer:
         
         # Save parsed data
         if parsed_data:
-            parsed_filename = f"Parsed-{symbol}-{time_key}.json"
-            try:
-                with open(parsed_filename, 'w', encoding='utf-8') as f:
-                    json.dump(parsed_data, f, indent=2, ensure_ascii=False)
+            for index in range(len(self.parse_folders)):
+                self.write_parsed_result(self.parse_folders[index], timeNow, symbol, time_key, parsed_data)
+            
+    def write_parsed_result(self, prePath: str, timeNow, symbol: str, time_key: str, parsed_data: Optional[Dict]) -> None:
+        parsed_filename = f"{prePath}Parsed-{timeNow.year:04d}{timeNow.month:02d}{timeNow.day:02d}-{symbol}-{time_key}.json"
+        
+        try:
+            with open(parsed_filename, 'w', encoding='utf-8') as f:
+                json.dump(parsed_data, f, indent=2, ensure_ascii=False)
                 logging.info(f"Parsed data saved to {parsed_filename}")
-            except Exception as e:
-                logging.error(f"Failed to save parsed data: {e}")
-    
+        except Exception as e:
+            logging.error(f"Failed to save parsed data: {e}")
+
     def analyze_symbol_timeperiod(self, symbol: str, time_period: str) -> None:
         """Analyze a specific symbol for a specific time period"""
         try:
