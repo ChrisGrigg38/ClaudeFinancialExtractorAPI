@@ -39,10 +39,11 @@ class ClaudeForecasterLib
 private:
    CacheEntry cache_entries[];
    int        cache_size;
+   int        cache_update_hour;
    
    // Private methods
    int        FindCacheIndex(string time_key);
-   bool       IsMonday10AM();
+   bool       IsReadyForUpdate();
    bool       ShouldUpdateCache(string time_key);
    bool       ReadCSVFile(string time_key, ClaudeData &data);
    string     BuildFileName(string time_key);
@@ -53,7 +54,7 @@ private:
 
 public:
    // Constructor
-   ClaudeForecasterLib();
+   ClaudeForecasterLib(int cache_update_hour);
    
    // Destructor
    ~ClaudeForecasterLib();
@@ -69,8 +70,9 @@ public:
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
-ClaudeForecasterLib::ClaudeForecasterLib()
+ClaudeForecasterLib::ClaudeForecasterLib(int update_hour)
 {
+   cache_update_hour = update_hour;
    cache_size = 0;
    ArrayResize(cache_entries, 0);
 }
@@ -138,15 +140,15 @@ int ClaudeForecasterLib::FindCacheIndex(string time_key)
 }
 
 //+------------------------------------------------------------------+
-//| Check if current time is Monday 10:00 AM or later              |
+//| Check if current time is the right time for updating the cache   |
 //+------------------------------------------------------------------+
-bool ClaudeForecasterLib::IsMonday10AM()
+bool ClaudeForecasterLib::IsReadyForUpdate()
 {
    datetime current_time = TimeCurrent();
    int day_of_week = TimeDayOfWeek(current_time);
    int hour = TimeHour(current_time);
    
-   return (day_of_week == 1 && hour >= 10); // Monday = 1, hour >= 10
+   return (day_of_week == 1 && hour >= cache_update_hour); // Monday = 1, hour >= 10
 }
 
 //+------------------------------------------------------------------+
@@ -154,8 +156,8 @@ bool ClaudeForecasterLib::IsMonday10AM()
 //+------------------------------------------------------------------+
 bool ClaudeForecasterLib::ShouldUpdateCache(string time_key)
 {
-   // Only update on Monday at 10 AM or later
-   if(!IsMonday10AM())
+   // Only update on Monday at Update Cache hour or later
+   if(!IsReadyForUpdate())
       return false;
    
    int cache_index = FindCacheIndex(time_key);
