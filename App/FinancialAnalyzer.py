@@ -64,12 +64,7 @@ class FinancialAnalyzer:
                 rating_match = re.search(r'rating.*?([1-5])', response, re.IGNORECASE)
             
             if all([low_match, high_match, rating_match]):
-                return {
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "low": low_match.group(1),
-                    "high": high_match.group(1),
-                    "rating": rating_match.group(1)
-                }
+                return str(datetime.now().strftime("%Y-%m-%d %H:%M")) + "," + str(low_match.group(1)) + "," + str(high_match.group(1)) + "," + str(rating_match.group(1))
             else:
                 logging.warning("Could not parse all required values from response")
                 return None
@@ -102,14 +97,15 @@ class FinancialAnalyzer:
         # Save parsed data
         if parsed_data:
             for index in range(len(self.parse_folders)):
-                self.write_parsed_result(self.parse_folders[index], timeNow, symbol, time_key, parsed_data)
+                self.write_parsed_result(self.parse_folders[index], symbol, time_key, parsed_data)
             
-    def write_parsed_result(self, prePath: str, timeNow, symbol: str, time_key: str, parsed_data: Optional[Dict]) -> None:
-        parsed_filename = f"{prePath}Parsed-{timeNow.year:04d}{timeNow.month:02d}{timeNow.day:02d}-{symbol}-{time_key}.json"
+    def write_parsed_result(self, prePath: str, symbol: str, time_key: str, parsed_data: Optional[Dict]) -> None:
+        parsed_filename = f"{prePath}Parsed-{symbol}-{time_key}.csv"
         
         try:
-            with open(parsed_filename, 'w', encoding='utf-8') as f:
-                json.dump(parsed_data, f, indent=2, ensure_ascii=False)
+            with open(parsed_filename, 'a', encoding='utf-8') as f:
+                f.write(parsed_data)
+                f.write("\n")
                 logging.info(f"Parsed data saved to {parsed_filename}")
         except Exception as e:
             logging.error(f"Failed to save parsed data: {e}")
