@@ -141,9 +141,9 @@ class FinancialAnalyzer:
         except Exception as e:
             logging.error(f"Failed to analyze {symbol} for {time_period}: {e}")
     
-    def run_weekly_analysis(self) -> None:
+    def run_daily_analysis(self) -> None:
         """Run analysis for all symbol-timeperiod combinations"""
-        logging.info("Starting weekly analysis")
+        logging.info("Starting daily analysis")
         
         if not self.config or not self.config.client:
             logging.error("API client not initialized")
@@ -156,11 +156,11 @@ class FinancialAnalyzer:
         logging.info("Weekly analysis completed")
     
     def schedule_analysis(self) -> None:
-        """Schedule the weekly analysis"""
-        # Schedule for every Monday at 9 AM
-        schedule.every().monday.at("09:00").do(self.run_weekly_analysis)
+        """Schedule the daily analysis"""
+        # Schedule for every Day at 9 AM
+        schedule.every().day.at("09:00").do(self.run_daily_analysis)
         
-        logging.info("Analysis scheduled for every Monday at 9:00 AM")
+        logging.info("Analysis scheduled for every Day at 9:00 AM")
         
         # Keep the program running
         while True:
@@ -170,5 +170,5 @@ class FinancialAnalyzer:
     def run_manual_analysis(self) -> None:
         """Run analysis manually (for testing)"""
         print("Running manual analysis...")
-        self.run_weekly_analysis()
+        self.run_daily_analysis()
         print("Manual analysis completed!")
