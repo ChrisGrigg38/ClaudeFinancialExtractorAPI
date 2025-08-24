@@ -34,8 +34,8 @@ class FinancialAnalyzer:
         """Query Anthropic API with the given prompt"""
         try:
             message = self.config.client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1000,
+                model="claude-sonnet-4-20250514",
+                max_tokens=4000,
                 messages=[
                     {
                         "role": "user",
