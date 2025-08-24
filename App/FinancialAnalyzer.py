@@ -10,7 +10,7 @@ import logging
 class FinancialAnalyzer:
     def __init__(self, config):
         # Financial symbols to analyze
-        self.symbols = ["EURUSD", "XAUUSD", "GBPUSD"]
+        self.symbols = ["EURUSD"]
         
         # Time periods for analysis
         self.time_periods = ["3 months", "1 week", "1 month"]
@@ -22,7 +22,14 @@ class FinancialAnalyzer:
             "1 month": "1_month"
         }
 
-        self.parse_folders = [""]
+        self.parse_folders = ["Data/"]
+        self.full_folder = "Data/"
+
+        logging.basicConfig(
+            filename='app.log',
+            level=logging.INFO,  # Set the minimum logging level to INFO
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
         
         self.config = config
             
@@ -30,8 +37,9 @@ class FinancialAnalyzer:
         """Generate the analysis prompt"""
         return f"""Given the state of the economy, where would you think the {symbol} is heading for in the next {time_period}? Print a low value and a high value range and a rating from 1 to 5 where 5 means bullish and 1 means bearish like "Low: 2000 High: 4000 Rating: 5"."""
     
-    def query_anthropic(self, prompt: str) -> str:
+    def query_anthropic(self, prompt: str, retryCount) -> str:
         """Query Anthropic API with the given prompt"""
+        print("Making api call to anthropic. Please ensure usage is not overblown")
         try:
             message = self.config.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -43,11 +51,16 @@ class FinancialAnalyzer:
                     }
                 ]
             )
-            
-            return message.content[0].text
         except Exception as e:
             logging.error(f"API query failed: {e}")
+
+            if retryCount > 0:
+                time.sleep(10)
+                return self.query_anthropic(prompt, retryCount-1)
+            
             raise
+            
+        return message.content[0].text
     
     def parse_response(self, response: str) -> Optional[Dict]:
         """Parse the API response to extract Low, High, and Rating"""
@@ -73,7 +86,7 @@ class FinancialAnalyzer:
             logging.error(f"Failed to parse response: {e}")
             return None
     
-    def save_results(self, symbol: str, time_period: str, full_response: str, parsed_data: Optional[Dict]) -> None:
+    def save_results(self, symbol: str, time_period: str, full_response: str, parsed_data: Optional[Dict], originalPrompt: str) -> None:
         """Save both full and parsed results to files"""
         time_key = self.time_mapping[time_period]
         timeNow = datetime.now()
@@ -82,13 +95,14 @@ class FinancialAnalyzer:
         full_filename = f"Full-{timeNow.year:04d}{timeNow.month:02d}{timeNow.day:02d}-{symbol}-{time_key}.json"
         full_data = {
             "timestamp": timeNow.isoformat(),
+            "prompt": originalPrompt,
             "symbol": symbol,
             "time_period": time_period,
             "response": full_response
         }
         
         try:
-            with open(full_filename, 'w', encoding='utf-8') as f:
+            with open(self.full_folder + full_filename, 'w', encoding='utf-8') as f:
                 json.dump(full_data, f, indent=2, ensure_ascii=False)
             logging.info(f"Full response saved to {full_filename}")
         except Exception as e:
@@ -116,13 +130,13 @@ class FinancialAnalyzer:
             logging.info(f"Analyzing {symbol} for {time_period}")
             
             prompt = self.generate_prompt(symbol, time_period)
-            response = self.query_anthropic(prompt)
+            response = self.query_anthropic(prompt, 3)
             parsed_data = self.parse_response(response)
             
-            self.save_results(symbol, time_period, response, parsed_data)
+            self.save_results(symbol, time_period, response, parsed_data, prompt)
             
             # Add small delay between API calls to be respectful
-            time.sleep(1)
+            time.sleep(10)
             
         except Exception as e:
             logging.error(f"Failed to analyze {symbol} for {time_period}: {e}")

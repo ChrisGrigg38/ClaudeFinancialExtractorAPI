@@ -62,7 +62,7 @@ class ConfigManager:
     def create_config(self) -> None:
         """Create new encrypted configuration"""
         print("\n=== Create New Configuration ===")
-        api_key = getpass.getpass("Enter your Anthropic API key: ")
+        api_key = input("Enter your Anthropic API key: ")
         password = getpass.getpass("Enter password to encrypt config: ")
         confirm_password = getpass.getpass("Confirm password: ")
         
@@ -90,6 +90,8 @@ class ConfigManager:
             
             # Initialize Anthropic client
             self.client = anthropic.Anthropic(api_key=config["anthropic_api_key"])
+
+            print(self.client.models.list(limit=20))
             
             return True
         except Exception as e:
