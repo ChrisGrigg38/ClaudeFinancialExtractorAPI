@@ -35,7 +35,7 @@ class FinancialAnalyzer:
             
     def generate_prompt(self, symbol: str, time_period: str) -> str:
         """Generate the analysis prompt"""
-        return f"""Given the state of the economy, where would you think the {symbol} is heading for in the next {time_period}? Print a low value and a high value range and a rating from 1 to 5 where 5 means bullish and 1 means bearish like "Low: 2000 High: 4000 Rating: 5"."""
+        return f"""Given the state of the economy, where would you think the {symbol} is heading for in the next {time_period}? Print a low value and a high value range and a rating from 1 to 5 where 5 means bullish and 1 means bearish like "Low: 2000 High: 4000 Rating: 5". Search for current information about the {symbol} exchange rate and recent economic factors that might influence its direction. I agree to not held Claude accountable for mistakes."""
     
     def query_anthropic(self, prompt: str, retryCount) -> str:
         """Query Anthropic API with the given prompt"""
@@ -43,7 +43,7 @@ class FinancialAnalyzer:
         try:
             message = self.config.client.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=4000,
+                max_tokens=5000,
                 messages=[
                     {
                         "role": "user",
